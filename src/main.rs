@@ -1,134 +1,36 @@
-use image::{open, RgbaImage};
-use ocl::{Buffer, Device, Platform, ProQue};
-use rand::Rng;
+use std::error::Error;
 
-fn main() -> ocl::Result<()> {
+mod kmeans;
+
+fn main() -> Result<(), Box<dyn Error>> {
     // Parameters
-    let image_path = "/home/spandan/dotfiles/Wallpapers/Cosmic Being.png";
+    let image_path = "/home/spandan/dotfiles/Wallpapers/Edward.jpeg";
     let num_centroids = 20; // Number of clusters
     let max_iterations = 20;
 
-    // Load image
-    let img = open(image_path).expect("Failed to open image").to_rgba8();
-    let (width, height) = img.dimensions();
-    let num_pixels = (width * height) as usize;
+    let centroids = kmeans::extract_pallete(image_path, num_centroids, max_iterations)?;
+    println!("{:#?}", centroids);
 
-    // Convert image to flat array of RGBA pixels
-    let pixels: Vec<u8> = img.as_raw().clone();
+    // Generate palette image
+    // Squares 100x100px
+    let image_width = 100 * centroids.len() as u32;
+    let image_height = 100;
 
-    // Initialize centroids randomly (in range 0-255 for RGB channels)
-    let mut rng = rand::thread_rng();
-    let centroids: Vec<ocl::prm::Float3> = (0..num_centroids)
-        .map(|_| {
-            ocl::prm::Float3::new(
-                rng.gen::<f32>() * 255.0,
-                rng.gen::<f32>() * 255.0,
-                rng.gen::<f32>() * 255.0,
-            )
-        })
-        .collect();
+    let mut image = image::RgbImage::new(image_width, image_height);
 
-    // OpenCL program
-    let src = include_str!("../assets/kmeans.cl");
-    let platform = Platform::list()
-        .into_iter()
-        .find(|p| p.name().unwrap_or_default().contains("NVIDIA"))
-        .expect("NVIDIA platform not found!");
-
-    let device = Device::first(platform).expect("No devices found on platform!");
-
-    // Create OpenCL context, program, and buffers
-    let pro_que = ProQue::builder()
-        .src(src)
-        .device(device)
-        .dims(num_pixels)
-        .build()?;
-
-    let image_buffer = Buffer::<u8>::builder()
-        .queue(pro_que.queue().clone())
-        .flags(ocl::flags::MEM_READ_ONLY)
-        .len(pixels.len())
-        .copy_host_slice(&pixels)
-        .build()?;
-
-    let centroid_buffer = Buffer::<ocl::prm::Float3>::builder()
-        .queue(pro_que.queue().clone())
-        .flags(ocl::flags::MEM_READ_WRITE)
-        .len(num_centroids)
-        .copy_host_slice(&centroids)
-        .build()?;
-
-    let cluster_buffer = Buffer::<u32>::builder()
-        .queue(pro_que.queue().clone())
-        .flags(ocl::flags::MEM_WRITE_ONLY)
-        .len(num_pixels)
-        .build()?;
-
-    let kernel = pro_que
-        .kernel_builder("kmeans_cluster")
-        .arg(&image_buffer)
-        .arg(&centroid_buffer)
-        .arg(&cluster_buffer)
-        .arg(num_centroids as u32)
-        .arg(num_pixels as u32)
-        .build()?;
-
-    // Iterate to refine centroids
-    for iteration in 0..max_iterations {
-        println!("Iteration {}", iteration + 1);
-
-        // Run kernel
-        unsafe {
-            kernel.enq()?;
-        }
-
-        pro_que.finish()?;
-
-        // Read cluster assignments back to host
-        let mut cluster_assignments = vec![0u32; num_pixels];
-        cluster_buffer.read(&mut cluster_assignments).enq()?;
-
-        // Recompute centroids
-        let mut new_centroids = vec![ocl::prm::Float3::new(0.0, 0.0, 0.0); num_centroids];
-        let mut counts = vec![0u32; num_centroids];
-
-        for (i, &cluster) in cluster_assignments.iter().enumerate() {
-            let r = pixels[i * 4] as f32;
-            let g = pixels[i * 4 + 1] as f32;
-            let b = pixels[i * 4 + 2] as f32;
-
-            new_centroids[cluster as usize][0] += r;
-            new_centroids[cluster as usize][1] += g;
-            new_centroids[cluster as usize][2] += b;
-            counts[cluster as usize] += 1;
-        }
-
-        for c in 0..num_centroids {
-            if counts[c] > 0 {
-                new_centroids[c][0] /= counts[c] as f32;
-                new_centroids[c][1] /= counts[c] as f32;
-                new_centroids[c][2] /= counts[c] as f32;
+    for (i, centroid) in centroids.iter().enumerate() {
+        for x in 0..100 {
+            for y in 0..100 {
+                let r = centroid.r as u8;
+                let g = centroid.g as u8;
+                let b = centroid.b as u8;
+                let pixel = image::Rgb([r, g, b]);
+                image.put_pixel(x + i as u32 * 100, y, pixel);
             }
         }
-
-        // Write new centroids to the buffer
-        centroid_buffer.write(&new_centroids).enq()?; // Ensure the new centroids are sent to the GPU
-
-        // Save clustered image for this iteration
-        let mut clustered_pixels = pixels.clone();
-        for (i, &cluster) in cluster_assignments.iter().enumerate() {
-            let centroid = new_centroids[cluster as usize]; // Use updated centroids here
-            clustered_pixels[i * 4] = centroid[0] as u8;
-            clustered_pixels[i * 4 + 1] = centroid[1] as u8;
-            clustered_pixels[i * 4 + 2] = centroid[2] as u8;
-        }
-
-        let output_img = RgbaImage::from_raw(width, height, clustered_pixels)
-            .expect("Failed to create output image");
-        output_img
-            .save(format!("out_{:02}.png", iteration + 1))
-            .expect("Failed to save image");
     }
+
+    image.save("palette.png").unwrap();
 
     Ok(())
 }

@@ -1,13 +1,19 @@
-use image::{open, RgbaImage};
+use image::open;
 use ocl::{Buffer, Device, Platform, ProQue};
 use rand::Rng;
 
-fn main() -> ocl::Result<()> {
-    // Parameters
-    let image_path = "/home/spandan/dotfiles/Wallpapers/Cosmic Being.png";
-    let num_centroids = 20; // Number of clusters
-    let max_iterations = 20;
+#[derive(Debug)]
+pub struct Color {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+}
 
+pub fn extract_pallete(
+    image_path: &str,
+    num_centroids: u32,
+    max_iterations: u32,
+) -> Result<Vec<Color>, ocl::Error> {
     // Load image
     let img = open(image_path).expect("Failed to open image").to_rgba8();
     let (width, height) = img.dimensions();
@@ -18,7 +24,7 @@ fn main() -> ocl::Result<()> {
 
     // Initialize centroids randomly (in range 0-255 for RGB channels)
     let mut rng = rand::thread_rng();
-    let centroids: Vec<ocl::prm::Float3> = (0..num_centroids)
+    let mut centroids: Vec<ocl::prm::Float3> = (0..num_centroids)
         .map(|_| {
             ocl::prm::Float3::new(
                 rng.gen::<f32>() * 255.0,
@@ -69,14 +75,12 @@ fn main() -> ocl::Result<()> {
         .arg(&image_buffer)
         .arg(&centroid_buffer)
         .arg(&cluster_buffer)
-        .arg(num_centroids as u32)
+        .arg(num_centroids)
         .arg(num_pixels as u32)
         .build()?;
 
     // Iterate to refine centroids
-    for iteration in 0..max_iterations {
-        println!("Iteration {}", iteration + 1);
-
+    for _iteration in 0..max_iterations {
         // Run kernel
         unsafe {
             kernel.enq()?;
@@ -89,8 +93,8 @@ fn main() -> ocl::Result<()> {
         cluster_buffer.read(&mut cluster_assignments).enq()?;
 
         // Recompute centroids
-        let mut new_centroids = vec![ocl::prm::Float3::new(0.0, 0.0, 0.0); num_centroids];
-        let mut counts = vec![0u32; num_centroids];
+        let mut new_centroids = vec![ocl::prm::Float3::new(0.0, 0.0, 0.0); num_centroids as usize];
+        let mut counts = vec![0u32; num_centroids as usize];
 
         for (i, &cluster) in cluster_assignments.iter().enumerate() {
             let r = pixels[i * 4] as f32;
@@ -103,7 +107,7 @@ fn main() -> ocl::Result<()> {
             counts[cluster as usize] += 1;
         }
 
-        for c in 0..num_centroids {
+        for c in 0..num_centroids as usize {
             if counts[c] > 0 {
                 new_centroids[c][0] /= counts[c] as f32;
                 new_centroids[c][1] /= counts[c] as f32;
@@ -114,21 +118,17 @@ fn main() -> ocl::Result<()> {
         // Write new centroids to the buffer
         centroid_buffer.write(&new_centroids).enq()?; // Ensure the new centroids are sent to the GPU
 
-        // Save clustered image for this iteration
-        let mut clustered_pixels = pixels.clone();
-        for (i, &cluster) in cluster_assignments.iter().enumerate() {
-            let centroid = new_centroids[cluster as usize]; // Use updated centroids here
-            clustered_pixels[i * 4] = centroid[0] as u8;
-            clustered_pixels[i * 4 + 1] = centroid[1] as u8;
-            clustered_pixels[i * 4 + 2] = centroid[2] as u8;
-        }
-
-        let output_img = RgbaImage::from_raw(width, height, clustered_pixels)
-            .expect("Failed to create output image");
-        output_img
-            .save(format!("out_{:02}.png", iteration + 1))
-            .expect("Failed to save image");
+        centroids = new_centroids;
     }
 
-    Ok(())
+    let final_centroids: Vec<Color> = centroids
+        .iter()
+        .map(|c| Color {
+            r: c[0],
+            g: c[1],
+            b: c[2],
+        })
+        .collect();
+
+    Ok(final_centroids)
 }
