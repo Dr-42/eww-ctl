@@ -32,29 +32,24 @@ use std::process::Command;
 
 pub fn get_volume() -> String {
     let output = Command::new("amixer")
-        .args([
-            "get",
-            "Master",
-            "|",
-            "grep",
-            "-oP",
-            "(?<=\\[).*?(?=\\])",
-            "|",
-            "tail",
-            "-n",
-            "1",
-        ])
+        .args(["get", "Master"])
         .output()
         .expect("failed to execute process");
 
-    let volume_status = String::from_utf8_lossy(&output.stdout);
-    let volume_status = volume_status.trim().to_string();
+    let volume_details = String::from_utf8_lossy(&output.stdout);
+
+    let mut volume = 0;
+    for line in volume_details.lines() {
+        if line.contains("%") {
+            let vol = line.split_once("[").unwrap().1.split_once("%").unwrap().0;
+            volume = vol.parse::<u32>().unwrap();
+            break;
+        }
+    }
 
     let icons = ["󰕾 ", "󰖁 "];
 
-    let vol = volume_status.parse::<f32>().unwrap();
-
-    if vol < 0.1 {
+    if volume == 0 {
         icons[1].to_string()
     } else {
         icons[0].to_string()

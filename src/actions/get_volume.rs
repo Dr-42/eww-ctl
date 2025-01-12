@@ -18,23 +18,20 @@ use std::process::Command;
 
 pub fn get_volume() -> String {
     let output = Command::new("amixer")
-        .args([
-            "get",
-            "Master",
-            "|",
-            "grep",
-            "-oP",
-            "(?<=\\[).*?(?=\\])",
-            "|",
-            "tail",
-            "-n",
-            "1",
-        ])
+        .args(["get", "Master"])
         .output()
         .expect("failed to execute process");
 
-    let volume_status = String::from_utf8_lossy(&output.stdout);
-    let volume_status = volume_status.trim().to_string();
+    let volume_details = String::from_utf8_lossy(&output.stdout);
 
-    volume_status
+    let mut volume = 0;
+    for line in volume_details.lines() {
+        if line.contains("%") {
+            let vol = line.split_once("[").unwrap().1.split_once("%").unwrap().0;
+            volume = vol.parse::<u32>().unwrap();
+            break;
+        }
+    }
+
+    volume.to_string().trim().to_string()
 }

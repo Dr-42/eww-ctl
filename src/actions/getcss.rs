@@ -1,33 +1,10 @@
 use crate::utils::{extract_pallete, Color};
 
-fn get_luminance(color: &Color) -> f32 {
-    const GAMMA: f32 = 2.4;
-
-    const RED: f32 = 0.2126;
-    const GREEN: f32 = 0.7152;
-    const BLUE: f32 = 0.0722;
-
-    fn transform(v: f32) -> f32 {
-        let v = v / 255.0;
-        if v <= 0.03928 {
-            v / 12.92
-        } else {
-            ((v + 0.055) / 1.055).powf(GAMMA)
-        }
-    }
-
-    let r = transform(color.r);
-    let g = transform(color.g);
-    let b = transform(color.b);
-
-    r * RED + g * GREEN + b * BLUE
-}
-
 fn make_readable(fg: &Color, bg: &Color) -> (Color, Color) {
-    let fg_luminnance = get_luminance(fg);
-    let bg_luminance = get_luminance(bg);
+    let fg_luminnance = fg.luminance();
+    let bg_luminance = bg.luminance();
 
-    let (mut light, dark) = if fg_luminnance > bg_luminance {
+    let (mut light, dark) = if fg_luminnance < bg_luminance {
         (fg.clone(), bg.clone())
     } else {
         (bg.clone(), fg.clone())
@@ -48,7 +25,8 @@ fn make_readable(fg: &Color, bg: &Color) -> (Color, Color) {
 }
 
 pub fn getcss(image_path: &str) -> String {
-    let colors = extract_pallete(image_path, 6, 10).unwrap();
+    let mut colors = extract_pallete(image_path, 6, 7).unwrap();
+    colors.sort_by(|a, b| a.luminance().partial_cmp(&b.luminance()).unwrap());
 
     let dial_color = colors[0].invert();
     let hour_color = &colors[1];

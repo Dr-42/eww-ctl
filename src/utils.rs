@@ -28,6 +28,29 @@ impl Color {
             a: alpha,
         }
     }
+
+    pub fn luminance(&self) -> f32 {
+        const GAMMA: f32 = 2.4;
+
+        const RED: f32 = 0.2126;
+        const GREEN: f32 = 0.7152;
+        const BLUE: f32 = 0.0722;
+
+        fn transform(v: f32) -> f32 {
+            let v = v / 255.0;
+            if v <= 0.03928 {
+                v / 12.92
+            } else {
+                ((v + 0.055) / 1.055).powf(GAMMA)
+            }
+        }
+
+        let r = transform(self.r);
+        let g = transform(self.g);
+        let b = transform(self.b);
+
+        r * RED + g * GREEN + b * BLUE
+    }
 }
 
 impl Display for Color {

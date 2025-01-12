@@ -51,7 +51,7 @@ pub fn get_image() -> String {
 
     let arg = format!("getcss={css}");
 
-    let eww_binary = "/home/spandan/.local/bin/eww";
+    let eww_binary = "eww";
 
     Command::new(eww_binary)
         .args(["update", &arg])
