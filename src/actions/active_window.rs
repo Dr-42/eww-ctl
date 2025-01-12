@@ -30,5 +30,5 @@ pub fn get_active_window() -> String {
             return client["title"].as_str().unwrap().to_string();
         }
     }
-    "".to_string()
+    "Welcome Dr-42".to_string()
 }

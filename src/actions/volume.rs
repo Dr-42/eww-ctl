@@ -55,8 +55,8 @@ pub fn get_volume() -> String {
     let vol = volume_status.parse::<f32>().unwrap();
 
     if vol < 0.1 {
-        return icons[1].to_string();
+        icons[1].to_string()
     } else {
-        return icons[0].to_string();
+        icons[0].to_string()
     }
 }

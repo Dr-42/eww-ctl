@@ -79,21 +79,12 @@ pub fn show_bar() -> String {
     let curpos = String::from_utf8_lossy(&output.stdout);
     let curpos_json: serde_json::Value = serde_json::from_str(&curpos).unwrap();
 
-    let output = Command::new("hyprctl")
-        .args(["clients", "-j"])
-        .output()
-        .expect("failed to execute process");
-
-    let hypr_wins = String::from_utf8_lossy(&output.stdout);
-    let hypr_wins_json: serde_json::Value = serde_json::from_str(&hypr_wins).unwrap();
-
-    if curpos_json["y"].as_u64().unwrap() < 30 {
-        return "true".to_string();
-    } else if hypr_ws_json["windows"].as_u64().unwrap() == 0 {
-        return "true".to_string();
-    } else if get_window_res(hypr_ws_json["id"].as_u64().unwrap(), 40) {
-        return "true".to_string();
+    if curpos_json["y"].as_u64().unwrap() < 30
+        || hypr_ws_json["windows"].as_u64().unwrap() == 0
+        || get_window_res(hypr_ws_json["id"].as_u64().unwrap(), 40)
+    {
+        "true".to_string()
     } else {
-        return "false".to_string();
+        "false".to_string()
     }
 }

@@ -33,11 +33,7 @@ use chrono::Timelike;
 
 fn check_time() -> bool {
     let now = chrono::Local::now();
-    if now.minute() == 0 && now.second() == 0 {
-        true
-    } else {
-        false
-    }
+    now.minute() == 0 && now.second() == 0
 }
 
 pub fn play_gong() {

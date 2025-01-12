@@ -1,9 +1,5 @@
 use crate::utils::{extract_pallete, Color};
 
-fn get_lightness(color: &Color) -> f32 {
-    0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b
-}
-
 fn get_luminance(color: &Color) -> f32 {
     const GAMMA: f32 = 2.4;
 
@@ -28,8 +24,8 @@ fn get_luminance(color: &Color) -> f32 {
 }
 
 fn make_readable(fg: &Color, bg: &Color) -> (Color, Color) {
-    let fg_luminnance = get_luminance(&fg);
-    let bg_luminance = get_luminance(&bg);
+    let fg_luminnance = get_luminance(fg);
+    let bg_luminance = get_luminance(bg);
 
     let (mut light, dark) = if fg_luminnance > bg_luminance {
         (fg.clone(), bg.clone())

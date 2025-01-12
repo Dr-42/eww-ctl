@@ -32,7 +32,7 @@
 use rand::seq::SliceRandom;
 use std::process::Command;
 
-pub fn get_image() {
+pub fn get_image() -> String {
     let wallpapers_dir = "/home/spandan/dotfiles/Wallpapers";
     let wallpapers = std::fs::read_dir(wallpapers_dir).unwrap();
     let wallpapers = wallpapers.filter_map(|f| f.ok()).collect::<Vec<_>>();
@@ -58,5 +58,5 @@ pub fn get_image() {
         .output()
         .expect("failed to updaate css");
 
-    println!("{}", wallpaper);
+    wallpaper
 }

@@ -104,9 +104,9 @@ pub fn get_workspaces(action: Option<WorkspacesAction>) {
 
     let activeworkspace = activeworkspace_info_json["id"].as_u64().unwrap() as usize;
 
-    let mut window_icons = vec![""; 9];
+    let mut window_icons = [""; 9];
 
-    for i in 0..9 as usize {
+    for i in 0..9_usize {
         if activeworkspace == i + 1 {
             window_icons[i] = icons[1];
         } else if has_window[i] {
@@ -118,11 +118,11 @@ pub fn get_workspaces(action: Option<WorkspacesAction>) {
 
     let mut output = "(eventbox :onscroll \"eww-ctl workspaces {}\" (box :css getcss :class \"workspaces\" :halign \"start\" :spacing 8".to_string();
 
-    for i in 0..9 as usize {
+    for (i, window_icon) in window_icons.iter().enumerate() {
         output += format!(
             "(button :onclick \"hyprctl dispatch workspace {}\" \"{}\")",
             i + 1,
-            window_icons[i]
+            window_icon
         )
         .as_str();
     }
