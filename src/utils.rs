@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use image::open;
 use ocl::{Buffer, Device, Platform, ProQue};
 use rand::Rng;
@@ -7,6 +9,12 @@ pub struct Color {
     pub r: f32,
     pub g: f32,
     pub b: f32,
+}
+
+impl Display for Color {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "rgb({}, {}, {})", self.r, self.g, self.b)
+    }
 }
 
 pub fn extract_pallete(

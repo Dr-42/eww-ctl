@@ -1,6 +1,7 @@
 use std::error::Error;
 
-mod kmeans;
+mod actions;
+mod utils;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Parameters
@@ -8,7 +9,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let num_centroids = 20; // Number of clusters
     let max_iterations = 20;
 
-    let centroids = kmeans::extract_pallete(image_path, num_centroids, max_iterations)?;
+    let centroids = utils::extract_pallete(image_path, num_centroids, max_iterations)?;
     println!("{:#?}", centroids);
 
     // Generate palette image
