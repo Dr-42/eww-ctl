@@ -27,8 +27,6 @@
 // if check_time():
 //     play_sound()
 
-use std::process::Command;
-
 use chrono::Timelike;
 
 fn check_time() -> bool {
@@ -40,10 +38,9 @@ pub fn play_gong() {
     if !check_time() {
         return;
     }
-    let mut command = Command::new("/bin/sh")
-        .args(["-c", "echo \"aplay assets/gong.wav\" | at now"])
-        .spawn()
-        .unwrap();
-
-    command.wait().unwrap();
+    let sound = include_bytes!("../../assets/gong.wav");
+    let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
+    let sink = rodio::Sink::try_new(&stream_handle).unwrap();
+    sink.append(rodio::Decoder::new(std::io::Cursor::new(sound)).unwrap());
+    sink.sleep_until_end();
 }

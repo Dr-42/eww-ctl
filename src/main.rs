@@ -1,8 +1,7 @@
-use std::error::Error;
-
 use actions::{
     powertray::PowertrayAction, set_brightness::BrightnessAction, workspaces::WorkspacesAction,
 };
+use std::error::Error;
 
 mod actions;
 mod utils;
@@ -63,36 +62,40 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Ok(())
             }
             "set_brightness" => {
-                let brightness_action = match args.get(2) {
-                    Some(action) => match action.as_str() {
-                        "up" => BrightnessAction::Up,
-                        "down" => BrightnessAction::Down,
-                        _ => {
-                            println!("Invalid action");
+                let brightness_action = {
+                    match args.get(2) {
+                        Some(action) => match action.as_str() {
+                            "up" => BrightnessAction::Up,
+                            "down" => BrightnessAction::Down,
+                            _ => {
+                                println!("Invalid action");
+                                return Ok(());
+                            }
+                        },
+                        None => {
+                            println!("No brightness action provided");
                             return Ok(());
                         }
-                    },
-                    None => {
-                        println!("No brightness action provided");
-                        return Ok(());
                     }
                 };
                 actions::set_brightness::set_brightness(brightness_action);
                 Ok(())
             }
             "set_volume" => {
-                let volume_action = match args.get(2) {
-                    Some(action) => match action.as_str() {
-                        "up" => actions::set_volume::VolumeAction::Up,
-                        "down" => actions::set_volume::VolumeAction::Down,
-                        _ => {
-                            println!("Invalid action");
+                let volume_action = {
+                    match args.get(2) {
+                        Some(action) => match action.as_str() {
+                            "up" => actions::set_volume::VolumeAction::Up,
+                            "down" => actions::set_volume::VolumeAction::Down,
+                            _ => {
+                                println!("Invalid action");
+                                return Ok(());
+                            }
+                        },
+                        None => {
+                            println!("No volume action provided");
                             return Ok(());
                         }
-                    },
-                    None => {
-                        println!("No volume action provided");
-                        return Ok(());
                     }
                 };
                 actions::set_volume::set_volume(volume_action);
