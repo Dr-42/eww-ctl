@@ -4,16 +4,48 @@ use image::open;
 use ocl::{Buffer, Device, Platform, ProQue};
 use rand::Rng;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Color {
     pub r: f32,
     pub g: f32,
     pub b: f32,
 }
 
+impl Color {
+    pub fn invert(&self) -> Color {
+        Color {
+            r: 255.0 - self.r,
+            g: 255.0 - self.g,
+            b: 255.0 - self.b,
+        }
+    }
+
+    pub fn with_alpha(&self, alpha: f32) -> ColorA {
+        ColorA {
+            r: self.r,
+            g: self.g,
+            b: self.b,
+            a: alpha,
+        }
+    }
+}
+
 impl Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "rgb({}, {}, {})", self.r, self.g, self.b)
+    }
+}
+
+pub struct ColorA {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+}
+
+impl Display for ColorA {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "rgba({}, {}, {}, {})", self.r, self.g, self.b, self.a)
     }
 }
 

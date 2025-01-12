@@ -32,7 +32,7 @@
 use rand::seq::SliceRandom;
 use std::process::Command;
 
-pub fn get_image() -> String {
+pub fn get_image() {
     let wallpapers_dir = "/home/spandan/dotfiles/Wallpapers";
     let wallpapers = std::fs::read_dir(wallpapers_dir).unwrap();
     let wallpapers = wallpapers.filter_map(|f| f.ok()).collect::<Vec<_>>();

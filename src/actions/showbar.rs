@@ -54,12 +54,12 @@ fn get_window_res(active_ws: u64, y_thresh: u64) -> bool {
     let hypr_wins_json: serde_json::Value = serde_json::from_str(&hypr_wins).unwrap();
 
     for window in hypr_wins_json.as_array().unwrap() {
-        if window["workspace"]["id"] == active_ws && window["at"][1] < y_thresh {
+        if window["workspace"]["id"] == active_ws && window["at"][1].as_u64().unwrap() < y_thresh {
             return false;
         }
     }
 
-    return true;
+    true
 }
 
 pub fn show_bar() -> String {
