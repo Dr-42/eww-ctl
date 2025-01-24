@@ -477,11 +477,9 @@ window {{
 
 #text:selected {{
     color: {bar_fg};
-    color: black;
     margin: 0px 0px;
     border: none;
     border-radius: 10px;
-    background-color: {bar_bg};
 }}
 
 #entry {{
