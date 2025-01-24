@@ -47,9 +47,10 @@ pub fn get_image() -> String {
         .display()
         .to_string();
 
-    let css = super::getcss::getcss(&wallpaper);
+    let color_data = super::getcss::ColorData::init(&wallpaper);
+    let eww_css = super::getcss::get_eww_css(&color_data);
 
-    let arg = format!("getcss={css}");
+    let arg = format!("getcss={eww_css}");
 
     let eww_binary = "eww";
 
@@ -57,6 +58,13 @@ pub fn get_image() -> String {
         .args(["update", &arg])
         .output()
         .expect("failed to updaate css");
+
+    let wofi_css = super::getcss::get_wofi_css(&color_data);
+
+    let config_dir = std::env::var("XDG_CONFIG_HOME").unwrap_or("/home/spandan/.config".into());
+    let wofi_config = format!("{}/wofi/style.css", config_dir);
+
+    std::fs::write(wofi_config, wofi_css).unwrap();
 
     wallpaper
 }

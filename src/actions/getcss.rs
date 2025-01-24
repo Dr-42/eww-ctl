@@ -1,4 +1,4 @@
-use crate::utils::{extract_pallete, Color};
+use crate::utils::{extract_pallete, Color, ColorA};
 
 fn make_readable(fg: &Color, bg: &Color) -> (Color, Color) {
     let fg_luminnance = fg.luminance();
@@ -24,30 +24,79 @@ fn make_readable(fg: &Color, bg: &Color) -> (Color, Color) {
     (light, dark)
 }
 
-pub fn getcss(image_path: &str) -> String {
-    let mut colors = extract_pallete(image_path, 6, 7).unwrap();
-    colors.sort_by(|a, b| a.luminance().partial_cmp(&b.luminance()).unwrap());
+pub struct ColorData {
+    dial_color: Color,
+    hour_color: Color,
+    minute_color: Color,
+    second_color: Color,
+    marker_filled_color: ColorA,
+    marker_empty_color: ColorA,
+    text_color: Color,
+    text_bg_color: Color,
+    bar_main_bg: ColorA,
+    bar_bg: ColorA,
+    bar_fg: Color,
+    bar_border: ColorA,
+    bar_shadow: ColorA,
+}
 
-    let dial_color = colors[0].invert();
-    let hour_color = &colors[1];
-    let minute_color = &colors[2];
-    let second_color = &colors[3];
+impl ColorData {
+    pub fn init(image_path: &str) -> Self {
+        let mut colors = extract_pallete(image_path, 6, 7).unwrap();
+        colors.sort_by(|a, b| a.luminance().partial_cmp(&b.luminance()).unwrap());
 
-    let marker_filled_color = colors[4].with_alpha(0.2);
-    let marker_empty_color = colors[4].with_alpha(0.1);
+        let dial_color = colors[0].invert();
+        let hour_color = colors[1].clone();
+        let minute_color = colors[2].clone();
+        let second_color = colors[3].clone();
 
-    let text_color = &colors[5];
-    let text_bg_color = colors[5].invert();
+        let marker_filled_color = colors[4].with_alpha(0.2);
+        let marker_empty_color = colors[4].with_alpha(0.1);
 
-    let (text_color, text_bg_color) = make_readable(text_color, &text_bg_color);
+        let text_color = &colors[5];
+        let text_bg_color = colors[5].invert();
 
-    let bar_main_bg = colors[3].with_alpha(0.9);
-    let bar_bg = colors[0].with_alpha(0.9);
-    let bar_fg = colors[0].invert();
+        let (text_color, text_bg_color) = make_readable(text_color, &text_bg_color);
 
-    let bar_border = colors[1].invert().with_alpha(0.9);
-    let bar_shadow = colors[2].invert().with_alpha(0.9);
+        let bar_main_bg = colors[3].with_alpha(0.9);
+        let bar_bg = colors[0].with_alpha(0.9);
+        let bar_fg = colors[0].invert();
 
+        let bar_border = colors[1].invert().with_alpha(0.9);
+        let bar_shadow = colors[2].invert().with_alpha(0.9);
+
+        ColorData {
+            dial_color,
+            hour_color,
+            minute_color,
+            second_color,
+            marker_filled_color,
+            marker_empty_color,
+            text_color,
+            text_bg_color,
+            bar_main_bg,
+            bar_bg,
+            bar_fg,
+            bar_border,
+            bar_shadow,
+        }
+    }
+}
+
+pub fn get_eww_css(color_data: &ColorData) -> String {
+    let dial_color = &color_data.dial_color;
+    let hour_color = &color_data.hour_color;
+    let minute_color = &color_data.minute_color;
+    let second_color = &color_data.second_color;
+    let marker_filled_color = &color_data.marker_filled_color;
+    let marker_empty_color = &color_data.marker_empty_color;
+    let text_color = &color_data.text_color;
+    let text_bg_color = &color_data.text_bg_color;
+    let bar_main_bg = &color_data.bar_main_bg;
+    let bar_bg = &color_data.bar_bg;
+    let bar_fg = &color_data.bar_fg;
+    let bar_border = &color_data.bar_border;
+    let bar_shadow = &color_data.bar_shadow;
     let css = format!(
         r#"
 .bar {{
@@ -350,6 +399,104 @@ pub fn getcss(image_path: &str) -> String {
   margin: 4px;
 }}
         "#,
+    );
+
+    css
+}
+
+pub fn get_wofi_css(color_data: &ColorData) -> String {
+    let hour_color = &color_data.hour_color;
+    let bar_main_bg = &color_data.bar_main_bg;
+    let bar_bg = &color_data.bar_bg;
+    let bar_fg = &color_data.bar_fg;
+    let bar_border = &color_data.bar_border;
+    let bar_shadow = &color_data.bar_shadow;
+
+    let css = format!(
+        r#"
+window {{
+    margin: 0px;
+    border: 5px solid 1e1e2e;
+    background-color: {bar_main_bg};
+    border-radius: 10px;
+    box-shadow: 2px 2px 2px {bar_shadow};
+}}
+
+#input {{
+    padding: 4px;
+    margin: 4px;
+    padding-left: 20px;
+    border: none;
+    color: #cdd6f4;
+    font-weight: bold;
+    background-color: {bar_bg};
+    /* background: ; */
+   	outline: none;
+    border-radius: 10px;
+    margin: 10px 13px;
+    margin-bottom: 2px;
+}}
+#input:focus {{
+    border: 0px solid {bar_border};
+    margin-bottom: 0px;
+}}
+
+#inner-box {{
+    margin: 4px;
+    border: 10px solid {bar_border};
+    color: {bar_fg};
+    font-weight: bold;
+    background-color: #1e1e2e;
+    /* background-color: red; */
+    border-radius: 15px;
+}}
+
+#outer-box {{
+    margin: 0px;
+    border: 1.5px solid #ffffff;
+    border-radius: 10px;
+    background-color: {bar_main_bg};
+}}
+
+#scroll {{
+    margin-top: 5px;
+    border: none;
+    border-radius: 15px;
+    margin-bottom: 5px;
+}}
+
+#img{{
+    margin-right: 10px;
+}}
+
+#img:selected {{
+    background-color: {hour_color};
+    margin-right: 10px;
+    border-radius: 10px;
+}}
+
+#text:selected {{
+    color: {bar_fg};
+    color: black;
+    margin: 0px 0px;
+    border: none;
+    border-radius: 10px;
+    background-color: {bar_bg};
+}}
+
+#entry {{
+    margin: 0px 0px;
+    border: none;
+    border-radius: 15px;
+    background-color: transparent;
+}}
+
+#entry:selected {{
+    margin: 0px 0px;
+    border: none;
+    border-radius: 5px;
+    background-color: {bar_main_bg};
+}}"#
     );
 
     css
