@@ -405,7 +405,6 @@ pub fn get_eww_css(color_data: &ColorData) -> String {
 }
 
 pub fn get_wofi_css(color_data: &ColorData) -> String {
-    let hour_color = &color_data.hour_color;
     let bar_main_bg = &color_data.bar_main_bg;
     let bar_bg = &color_data.bar_bg;
     let bar_fg = &color_data.bar_fg;
@@ -438,23 +437,23 @@ window {{
 }}
 #input:focus {{
     border: 0px solid {bar_border};
+    background-color: {bar_main_bg};
     margin-bottom: 0px;
 }}
 
 #inner-box {{
     margin: 4px;
-    border: 10px solid {bar_border};
-    color: {bar_fg};
+    border: 1px solid {bar_border};
+    color: {bar_bg};
     font-weight: bold;
-    background-color: #1e1e2e;
-    /* background-color: red; */
+    background-color: {bar_main_bg};
     border-radius: 15px;
 }}
 
 #outer-box {{
     margin: 0px;
-    border: 1.5px solid #ffffff;
-    border-radius: 10px;
+    border: 1.5px solid {bar_border};
+    border-radius: 2px;
     background-color: {bar_main_bg};
 }}
 
@@ -470,13 +469,14 @@ window {{
 }}
 
 #img:selected {{
-    background-color: {hour_color};
+    background-color: {bar_bg};
     margin-right: 10px;
     border-radius: 10px;
 }}
 
 #text:selected {{
     color: {bar_fg};
+    background-color: {bar_bg};
     margin: 0px 0px;
     border: none;
     border-radius: 10px;
@@ -493,7 +493,8 @@ window {{
     margin: 0px 0px;
     border: none;
     border-radius: 5px;
-    background-color: {bar_main_bg};
+    color: {bar_fg};
+    background-color: {bar_bg};
 }}"#
     );
 
